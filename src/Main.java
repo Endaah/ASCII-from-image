@@ -1,10 +1,8 @@
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.Buffer;
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class Main {
 
@@ -12,9 +10,11 @@ public class Main {
     /**
      * In pixels
      */
-    public static final int REASONABLE_IMAGE_SIZE = 1000000;
+    public static final int REASONABLE_IMAGE_SIZE = 100;
 
     private static String greyScale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.                                                              ";
+
+    private static boolean invert = false, scale = false;
 
     public static void main(String[] args) {
         BufferedImage image;
@@ -22,7 +22,7 @@ public class Main {
         File output = new File(OUTPUT_PATH + "output.txt");
         try {
             writer = new PrintWriter(new FileWriter(output));
-            String path = selectImage();
+            String path = selectOptions();
             if (path == null || (image = readImage(path)) == null) {
                 System.err.println("Image could not be read");
                 System.exit(1);
@@ -30,14 +30,14 @@ public class Main {
             }
 
             // If image is too big, rescale to a reasonable size
-            if (image.getHeight() > REASONABLE_IMAGE_SIZE) {
+            if (scale && image.getHeight() > REASONABLE_IMAGE_SIZE) {
                 image = scaleImage(image);
             }
             int avg;
             for (int i = 0; i < image.getHeight(); i++) {
                 for (int j = 0; j < image.getWidth(); j++) {
                     avg = getPixelColorAverage(image.getRGB(j, i));
-                    int charPosition = (int) Math.round(getCharToUse(avg));
+                    int charPosition = getCharToUse(avg);
                     char usedChar = greyScale.charAt(charPosition);
                     writer.print(usedChar);
                     writer.print(' ');
@@ -61,9 +61,10 @@ public class Main {
         return (red + blue + green) / 3;
     }
 
-    private static double getCharToUse(int brightness) {
+    private static int getCharToUse(int brightness) {
         double charPosition = (greyScale.length() - 1) * (brightness / 255.0);
-        return charPosition;
+        if (invert) charPosition = greyScale.length() - charPosition - 1;
+        return (int) Math.round(charPosition);
     }
 
     private static BufferedImage readImage(String name) {
@@ -89,15 +90,25 @@ public class Main {
 
         BufferedImage buffered = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
 
-        Graphics2D bufferredGraphics = buffered.createGraphics();
-        bufferredGraphics.drawImage(image, 0, 0, null);
-        bufferredGraphics.dispose();
+        Graphics2D bufferedGraphics = buffered.createGraphics();
+        bufferedGraphics.drawImage(image, 0, 0, null);
+        bufferedGraphics.dispose();
 
         return buffered;
     }
 
-    private static String selectImage() {
+    private static String selectOptions() {
         FileDialog fileChooser = new FileDialog(new Frame());
+
+        JPanel panel = new JPanel();
+        panel.add(new JCheckBox("Invert image"));
+        panel.add(new JCheckBox("Scale image"));
+        if (JOptionPane.showConfirmDialog(null, panel, "Select options", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
+            return "";
+
+        invert = ((JCheckBox) panel.getComponent(0)).isSelected();
+        scale = ((JCheckBox) panel.getComponent(1)).isSelected();
+
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
