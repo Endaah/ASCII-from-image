@@ -12,9 +12,9 @@ public class Main {
     /**
      * In pixels
      */
-    public static final int REASONABLE_IMAGE_SIZE = 50;
+    public static final int REASONABLE_IMAGE_SIZE = 1000000;
 
-    private static String greyScale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.       ";
+    private static String greyScale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.                                                              ";
 
     public static void main(String[] args) {
         BufferedImage image;
@@ -40,6 +40,7 @@ public class Main {
                     int charPosition = (int) Math.round(getCharToUse(avg));
                     char usedChar = greyScale.charAt(charPosition);
                     writer.print(usedChar);
+                    writer.print(' ');
                 }
                 writer.println();
             }
@@ -61,7 +62,7 @@ public class Main {
     }
 
     private static double getCharToUse(int brightness) {
-        double charPosition = 69 * (brightness / 255.0);
+        double charPosition = (greyScale.length() - 1) * (brightness / 255.0);
         return charPosition;
     }
 
